@@ -90,6 +90,7 @@ public:
     ImGui::Begin("Information"); // Create a window called "Hello,
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
     ImGui::SliderFloat("Size", &settings.size, 1.f, 100.f);
+    ImGui::SliderInt("Work groups", &settings.global, 1, GL_MAX_COMPUTE_WORK_GROUP_COUNT);
     ImGui::End();
     compute->release();
     glPointSize(settings.size);
@@ -113,7 +114,7 @@ public:
     glm::vec4 realPos = toWorld * pos;
 
     compute->use();
-    compute->global[0] = 100;
+    compute->global[0] = settings.global;
     compute->set("size", settings.amount);
     compute->set( "xmouse", realPos.x);
     compute->set("ymouse", realPos.y);
@@ -138,8 +139,9 @@ private:
 
   struct {
     float xmouse, ymouse;
-    unsigned int amount = 1e5;
+    unsigned int amount = 1e7;
     float size = 1.f;
+    int global = 1024;
   } settings;
 };
 
