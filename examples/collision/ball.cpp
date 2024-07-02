@@ -2,6 +2,7 @@
 #include "glcore/buffer.h"
 #include "glm/ext/matrix_transform.hpp"
 #include <vector>
+#include <memory>
 #include <numbers>
 
 #define DEFINITION 20

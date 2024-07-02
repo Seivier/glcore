@@ -1,5 +1,4 @@
 #include "glm/gtc/type_ptr.hpp"
-#include <glad/glad.h>
 #include <glcore/shader.h>
 
 #include <fstream>
@@ -86,6 +85,10 @@ void Shader::set(const string &name, int value) {
   glUniform1i(get(name), value);
 }
 
+void Shader::set(const string &name, unsigned int value) {
+  glUniform1ui(get(name), value);
+}
+
 void Shader::set(const string &name, bool value) {
   glUniform1i(get(name), value);
 }
@@ -113,3 +116,24 @@ void Shader::setSubroutine(int type, const std::vector<unsigned int>& values) {
 int Shader::get(const string &name) {
   return glGetUniformLocation(id_, name.c_str());
 }
+
+Shader::Shader(): id_(0) {};
+
+#ifdef GL_COMPUTE_SHADER
+ComputeShader::ComputeShader(const string& path) {
+  id_ = glCreateProgram();
+  attachSource(id_, GL_COMPUTE_SHADER, path);
+  glLinkProgram(id_);
+  GL_CHECK_ERRORS(id_, GL_LINK_STATUS, glGetProgramiv, glGetProgramInfoLog);
+}
+
+void ComputeShader::execute() {
+  use();
+  glDispatchCompute(global[0], global[1], global[2]);
+}
+
+void ComputeShader::release() {
+  glMemoryBarrier(GL_ALL_BARRIER_BITS);
+}
+
+#endif 

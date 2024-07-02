@@ -1,15 +1,20 @@
-#include <OpenCL/cl.h>
-#include <OpenCL/cl_gl.h>
-#include <OpenCL/opencl.h> // use C standard
-#include <OpenGL/OpenGL.h>
-#include <cstdlib>
-#include <fstream>
+#include <CL/cl.h>
+#include <cstddef>
 #include <glcore/core.h>
 #include <glcore/camera.h>
+#if defined (__APPLE__)
+#include <OpenCL/opencl.h> // use C standard
+#include <OpenGL/OpenGL.h>
+#elif defined (__linux__)
+#include <CL/opencl.h> // use C standard
+#include <GL/gl.h>
+#include <GL/glx.h>
+#endif
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 #include <memory>
+#include <fstream>
 #include <sstream>
 
 class SharedBuffer : public VertexBuffer {
@@ -161,7 +166,37 @@ public:
 
 private:
   void setup_compute() {
+    cl_platform_id* platforms;
+    cl_uint platforms_amount;
+    clGetPlatformIDs(0, NULL, &platforms_amount);
+    std::cout << "Listing platforms (" << platforms_amount << ")...\n";
+    platforms = new cl_platform_id[platforms_amount];
+    clGetPlatformIDs(platforms_amount, platforms, NULL);
+    for (cl_uint i = 0; i < platforms_amount; i++) {
+      char buf[1024];
+      clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, 1024, &buf, NULL);
+      std::cout << "  " << i << ": " << buf << "\n";
+
+    }
+    cl_platform_id plat = platforms[0];
+    delete [] platforms;
+
+    cl_device_id* devices;
+    cl_uint devices_amount;
+    clGetDeviceIDs(plat, CL_DEVICE_TYPE_GPU, 0, NULL, &devices_amount);
+    std::cout << "Listing devices (" << devices_amount << ")...\n";
+    devices = new cl_device_id[devices_amount];
+    clGetDeviceIDs(plat, CL_DEVICE_TYPE_GPU, devices_amount, devices, NULL);
+    for (cl_uint i = 0; i < devices_amount; i++) {
+      char buf[1024];
+      clGetDeviceInfo(devices[i], CL_DEVICE_NAME, 1024, &buf, NULL);
+      std::cout << "  " << i << ": " << buf << "\n";
+    }
+    cl_device_id dev = devices[0];
+    delete [] devices;
+
 #if defined(__APPLE__)
+    std::cout << "Using macOS context\n";
     CGLContextObj kCGLContext = CGLGetCurrentContext();
     CGLShareGroupObj kCGLShareGroup = CGLGetShareGroup(kCGLContext);
 
@@ -169,31 +204,34 @@ private:
         CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
         (cl_context_properties)kCGLShareGroup, 0};
 #elif defined(_WIN32)
+    std::cout << "Using Windows context\n";
     cl_context_properties properties[] = {
         CL_GL_CONTEXT_KHR,
         (cl_context_properties)wglGetCurrentContext(),
         CL_WGL_HDC_KHR,
         (cl_context_properties)wglGetCurrentDC(),
         CL_CONTEXT_PLATFORM,
-        (cl_context_properties)platform,
+        (cl_context_properties)plat,
         0};
 #elif defined(__linux__)
+    std::cout << "Using Linux context\n";
     cl_context_properties properties[] = {
         CL_GL_CONTEXT_KHR,
         (cl_context_properties)glXGetCurrentContext(),
         CL_GLX_DISPLAY_KHR,
         (cl_context_properties)glXGetCurrentDisplay(),
         CL_CONTEXT_PLATFORM,
-        (cl_context_properties)platform,
+        (cl_context_properties)plat,
         0};
 #endif // TODO:  Check support for other platforms
-    cl.context = clCreateContext(properties, 0, 0, 0, 0, 0);
+    int err = 0;
+    // cl.context = clCreateContext(properties, 0, 0, 0, 0, &err);
+    cl.context = clCreateContext(properties, 1, &dev, NULL, NULL, &err);
     if (!cl.context) {
-      std::cerr << "Error: Invalid context\n";
+      std::cerr << "Error: Invalid context (" << err << ")\n";
       return;
     }
 
-    int err;
     size_t returned_size;
     unsigned int device_count;
     cl_device_id device_ids[16];

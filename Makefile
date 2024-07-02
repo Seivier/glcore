@@ -2,7 +2,7 @@ BUILD = build
 CMAKE = cmake
 MAKE = make
 TYPE = Debug
-TARGET = opencl
+TARGET = compute
 
 all: run
 
@@ -15,7 +15,10 @@ build:
 	@cd $(BUILD) && $(MAKE)
 .PHONY: build
 
-run: build
+build-%:
+	@cd $(BUILD) && $(MAKE) $*
+
+run: build-$(TARGET)
 	@./$(BUILD)/examples/$(TARGET)
 
 clean:

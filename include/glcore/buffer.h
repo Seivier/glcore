@@ -9,6 +9,8 @@ public:
   virtual void draw() = 0;
   virtual void build() = 0;
   virtual ~Buffer() = 0;
+protected:
+  virtual void bind() = 0;
 };
 
 class VertexBuffer: public Buffer {
@@ -23,7 +25,7 @@ public:
   void build() override;
 
 protected:
-  void bind();
+  void bind() override;
   unsigned int vao_, vbo_;
   std::vector<float> vertices_;
 };
@@ -42,7 +44,7 @@ public:
   void build() override;
 
 protected:
-  void bind();
+  void bind() override;
   unsigned int ebo_;
   std::vector<unsigned int> indices_;
 };
