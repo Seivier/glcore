@@ -45,7 +45,7 @@ VertexBuffer::~VertexBuffer() {
 
 void VertexBuffer::draw() {
   bind();
-  glDrawArrays(GL_POINTS, 0, vertices_.size());
+  glDrawArrays(GL_POINTS, 0, vertices_.size()/3);
 }
 
 void VertexBuffer::build() {
