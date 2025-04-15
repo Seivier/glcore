@@ -6,7 +6,7 @@
 #include <sstream>
 
 #define GL_CHECK_ERRORS(id, type, fun, log)                                    \
-  ({                                                                           \
+  {                                                                            \
     int success;                                                               \
     char infoLog[512];                                                         \
     fun(id, type, &success);                                                   \
@@ -14,7 +14,7 @@
       log(id, 512, NULL, infoLog);                                             \
       std::cerr << #type " (" #id ")\n" << infoLog << std::endl;               \
     }                                                                          \
-  })
+  }
 
 using std::string;
 

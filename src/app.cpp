@@ -1,11 +1,12 @@
 #include "imgui.h"
-#include <format>
 #include <glcore/app.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <iostream>
+#include <sstream>
 
 using std::string;
+using namespace std;
 
 static App *current = nullptr;
 
@@ -100,7 +101,9 @@ App::App(unsigned int glmajor, unsigned int glminor, int width, int height,
   glfwSetScrollCallback(window, global_scroll_callback);
 
   ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init(std::format("#version {}{}0", glmajor, glminor).c_str());
+  stringstream ss;
+  ss << "#version " << glmajor << glminor << "0";
+  ImGui_ImplOpenGL3_Init(ss.str().c_str());
   glEnable(GL_DEPTH_TEST);
 }
 
