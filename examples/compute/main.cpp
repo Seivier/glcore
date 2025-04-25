@@ -12,6 +12,8 @@ int main (int argc, char *argv[]) {
 #include <glcore/camera.h>
 #include <glm/ext.hpp>
 
+#define RANDOM ((float)rand() / (float)(RAND_MAX))
+
 class StorageBuffer : public Buffer {
 public:
   StorageBuffer(int binding, const std::vector<float> &vertices): binding_(binding), vertices_(vertices) {
@@ -71,8 +73,8 @@ public:
     std::vector<float> data;
     std::vector<unsigned int> idx;
     for (int i = 0; i < settings.amount; i++) {
-      data.push_back(drand48()*2.f - 1.0f);
-      data.push_back(drand48()*2.f - 1.0f);
+      data.push_back(RANDOM*2.f - 1.0f);
+      data.push_back(RANDOM*2.f - 1.0f);
       data.push_back(0.f);
       data.push_back(0.f);
       idx.push_back(i);

@@ -12,7 +12,7 @@ uniform mat4 view;
 uniform int quality;
 
 void main() {
-  float deltaTheta = radians(360) / quality;
+  float deltaTheta = radians(360.0) / quality;
   for(int i = 0; i <= quality; i++) {
     float x = cos(deltaTheta*i) * size;
     float y = sin(deltaTheta*i) * size;

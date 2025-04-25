@@ -10,6 +10,7 @@
 #include <vector>
 
 #define N 10
+#define RANDOM ((float)rand() / (float)(RAND_MAX))
 
 using std::make_unique;
 using std::unique_ptr;
@@ -32,10 +33,10 @@ public:
   MyApp() : App(3, 3, 800, 600), projection(1.0f) {
     for (size_t i = 0; i < N; i++) {
       balls.emplace_back();
-      balls[i].radius = glm::mix(0.05, 0.1, drand48());
-      balls[i].velocity = glm::vec3(drand48() * 2 - 1, drand48() * 2 - 1, 0.f);
-      balls[i].position = glm::vec3(drand48() * 2 - 1, drand48() * 2 - 1, 0.f);
-      balls[i].color = glm::vec3(drand48(), drand48(), drand48());
+      balls[i].radius = glm::mix(0.05, 0.1, RANDOM);
+      balls[i].velocity = glm::vec3(RANDOM * 2 - 1, RANDOM * 2 - 1, 0.f);
+      balls[i].position = glm::vec3(RANDOM * 2 - 1, RANDOM * 2 - 1, 0.f);
+      balls[i].color = glm::vec3(RANDOM, RANDOM, RANDOM);
     }
 
     vector<float> qv{1.0f,  1.0f,  0.0f, 1.0f,  -1.0f, 0.0f,
