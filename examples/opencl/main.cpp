@@ -5,6 +5,21 @@
 #include <GLFW/glfw3.h>
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
+#elif defined(__APPLE__) || defined(__MACOSX)
+#define CL_TARGET_OPENCL_VERSION 120
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <OpenGL/OpenGL.h>
+#include <CL/cl.h>
+#include <CL/cl_gl.h>
+
+#elif defined(__linux__)
+#define CL_TARGET_OPENCL_VERSION 120
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <GL/glx.h>
+#include <CL/cl.h>
+#include <CL/cl_gl.h>
 #else
 #error "Unsupported platform"
 #endif
@@ -47,6 +62,20 @@ public:
             CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
             CL_CONTEXT_PLATFORM, (cl_context_properties)cl.platform,
             0};
+#elif defined(__APPLE__) || defined(__MACOSX)
+        cl_context_properties props[] = {
+            CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+            (cl_context_properties)CGLGetShareGroup(CGLGetCurrentContext()),
+            0};
+
+#elif defined(__linux__)
+        cl_context_properties props[] = {
+            CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
+            CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
+            CL_CONTEXT_PLATFORM, (cl_context_properties)cl.platform,
+            0};
+#else
+#error "Unsupported platform"
 #endif
         CL_CALL(cl_context context = clCreateContext(props, 1, &cl.device, nullptr, nullptr, &err))
 
