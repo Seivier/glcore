@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
+#else
+#error "Unsupported platform"
 #endif
 
 #include "glcore/camera.h"
