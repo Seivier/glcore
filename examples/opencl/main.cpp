@@ -15,50 +15,45 @@
 
 #include "glm/ext/matrix_clip_space.hpp"
 
-
 using namespace glm;
-
 
 #define RANDOM ((float)rand() / (float)(RAND_MAX))
 
-#define CL_CALL(x) \
-        x; \
-        if (err != CL_SUCCESS) { \
-            std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << ": " << err << "\n"; \
-            exit(EXIT_FAILURE); \
-        }
+#define CL_CALL(x)                                                                    \
+    x;                                                                                \
+    if (err != CL_SUCCESS)                                                            \
+    {                                                                                 \
+        std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << ": " << err << "\n"; \
+        exit(EXIT_FAILURE);                                                           \
+    }
 
-class MyApp final : public App {
+class MyApp final : public App
+{
 public:
-    MyApp() : App(4, 0, 800, 600, "OpenCL") {
+    MyApp() : App(4, 0, 800, 600, "OpenCL")
+    {
         glfwSwapInterval(0);
 
+        findGPUDevice();
+
         cl_int err;
-        // --- 3. Get OpenCL platform & device ---
-        cl_uint numPlatforms;
-        cl_platform_id platform;
-        CL_CALL(err = clGetPlatformIDs(1, &platform, &numPlatforms))
-
-        cl_device_id device;
-        CL_CALL(err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr))
-
 
         // --- 4. Create OpenCL context with OpenGL sharing ---
 #if defined(_WIN32)
         cl_context_properties props[] = {
-            CL_GL_CONTEXT_KHR, (cl_context_properties) wglGetCurrentContext(),
-            CL_WGL_HDC_KHR, (cl_context_properties) wglGetCurrentDC(),
-            CL_CONTEXT_PLATFORM, (cl_context_properties) platform,
-            0
-        };
+            CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
+            CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
+            CL_CONTEXT_PLATFORM, (cl_context_properties)cl.platform,
+            0};
 #endif
-        CL_CALL(cl_context context = clCreateContext(props, 1, &device, nullptr, nullptr, &err))
+        CL_CALL(cl_context context = clCreateContext(props, 1, &cl.device, nullptr, nullptr, &err))
 
         // --- 5. Create OpenCL command queue ---
-        CL_CALL(cl.queue = clCreateCommandQueue(context, device, 0, &err));
+        CL_CALL(cl.queue = clCreateCommandQueue(context, cl.device, 0, &err));
 
         std::vector<float> data;
-        for (int i = 0; i < settings.amount; ++i) {
+        for (int i = 0; i < settings.amount; ++i)
+        {
             data.push_back(RANDOM * 2.f - 1.f);
             data.push_back(RANDOM * 2.f - 1.f);
             data.push_back(0.f);
@@ -86,16 +81,17 @@ public:
         std::string source = sstring.str();
         const char *sourcePtr = source.c_str();
         CL_CALL(cl_program program = clCreateProgramWithSource(context, 1, &sourcePtr, nullptr, &err));
-        CL_CALL(err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr));
+        CL_CALL(err = clBuildProgram(program, 1, &cl.device, nullptr, nullptr, nullptr));
         CL_CALL(cl.kernel = clCreateKernel(program, "update", &err));
 
         // --- 8. Obtain max work group size ---
         size_t max = 1;
-        CL_CALL(err = clGetKernelWorkGroupInfo(cl.kernel, device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &max, nullptr));
+        CL_CALL(err = clGetKernelWorkGroupInfo(cl.kernel, cl.device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &max, nullptr));
         cl.max = max;
     };
 
-    void render() override {
+    void render() override
+    {
 
         App::render();
         glDisable(GL_DEPTH_TEST);
@@ -119,7 +115,8 @@ public:
         glDrawArrays(GL_POINTS, 0, settings.amount);
     };
 
-    void update(float deltaTime) override {
+    void update(float deltaTime) override
+    {
         const float aspect = static_cast<float>(width_) / static_cast<float>(height_);
         projection = ortho(-aspect, aspect, -1.0f, 1.0f, 0.1f, 100.0f);
 
@@ -132,11 +129,11 @@ public:
 
         cl_int err;
 
-        CL_CALL(err = clSetKernelArg(cl.kernel,0, sizeof(cl_mem), &cl.buffer));
-        CL_CALL(err = clSetKernelArg(cl.kernel,1, sizeof(unsigned int), &settings.amount));
-        CL_CALL(err = clSetKernelArg(cl.kernel,2, sizeof(float), &realPos.x));
-        CL_CALL(err = clSetKernelArg(cl.kernel,3, sizeof(float), &realPos.y));
-        CL_CALL(err = clSetKernelArg(cl.kernel,4, sizeof(float), &deltaTime));
+        CL_CALL(err = clSetKernelArg(cl.kernel, 0, sizeof(cl_mem), &cl.buffer));
+        CL_CALL(err = clSetKernelArg(cl.kernel, 1, sizeof(unsigned int), &settings.amount));
+        CL_CALL(err = clSetKernelArg(cl.kernel, 2, sizeof(float), &realPos.x));
+        CL_CALL(err = clSetKernelArg(cl.kernel, 3, sizeof(float), &realPos.y));
+        CL_CALL(err = clSetKernelArg(cl.kernel, 4, sizeof(float), &deltaTime));
 
         CL_CALL(err = clEnqueueAcquireGLObjects(cl.queue, 1, &cl.buffer, 0, nullptr, nullptr));
 
@@ -152,7 +149,8 @@ public:
         CL_CALL(err = clFinish(cl.queue));
     }
 
-    void cursor_position_callback(double xpos, double ypos) override {
+    void cursor_position_callback(double xpos, double ypos) override
+    {
         if (io->WantCaptureMouse)
             return;
         settings.xmouse = xpos;
@@ -160,28 +158,89 @@ public:
     }
 
 private:
-    void bind() const {
+    void bind() const
+    {
         glBindVertexArray(gl.vao);
         glBindBuffer(GL_ARRAY_BUFFER, gl.vbo);
+    }
+
+    void findGPUDevice()
+    {
+        cl_uint numPlatforms;
+        cl_int err;
+
+        // Get the number of platforms
+        CL_CALL(err = clGetPlatformIDs(0, nullptr, &numPlatforms));
+
+        std::vector<cl_platform_id> platforms(numPlatforms);
+        CL_CALL(err = clGetPlatformIDs(numPlatforms, platforms.data(), nullptr));
+
+        for (cl_uint i = 0; i < numPlatforms; ++i)
+        {
+            char platformName[128];
+            CL_CALL(err = clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(platformName), platformName, nullptr));
+
+            std::cout << "Platform " << i + 1 << ": " << platformName << std::endl;
+
+            cl_uint numDevices;
+            CL_CALL(err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices))
+
+            std::vector<cl_device_id> devices(numDevices);
+            CL_CALL(err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, numDevices, devices.data(), nullptr));
+
+            for (cl_uint j = 0; j < numDevices; ++j)
+            {
+                char deviceName[128];
+                CL_CALL(err = clGetDeviceInfo(devices[j], CL_DEVICE_NAME, sizeof(deviceName), deviceName, nullptr));
+
+                cl_device_type deviceType;
+                CL_CALL(err = clGetDeviceInfo(devices[j], CL_DEVICE_TYPE, sizeof(deviceType), &deviceType, nullptr));
+
+                std::cout << "  Device " << j + 1 << ": " << deviceName << " (";
+                if (deviceType & CL_DEVICE_TYPE_CPU)
+                {
+                    std::cout << "CPU)";
+                }
+
+                else if (deviceType & CL_DEVICE_TYPE_GPU)
+                {
+
+                    std::cout << "GPU)";
+                    if (cl.device == nullptr)
+                    {
+                        cl.device = devices[j];
+                        cl.platform = platforms[i];
+                        std::cout << " <-- Selected";
+                    }
+                }
+
+                std::cout << std::endl;
+            }
+        }
     }
 
     Shader shader = {SHADER_PATH "vert.glsl", SHADER_PATH "frag.glsl"};
     Camera camera = {{0.f, 0.f, 3.f}, 1.f, -90.f};
     mat4 projection = 0;
 
-    struct {
+    struct
+    {
+        cl_platform_id platform = nullptr;
+        cl_device_id device = nullptr;
         cl_kernel kernel = nullptr;
         cl_mem buffer = nullptr;
         cl_command_queue queue = nullptr;
         size_t max = 0;
     } cl;
 
-    struct {
+    struct
+    {
         GLuint vbo = 0;
         GLuint vao = 0;
     } gl;
 
-    struct {
+    struct
+    {
         float xmouse, ymouse;
         int amount = 1e7;
         int local = 32;
@@ -190,7 +249,8 @@ private:
     } settings;
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     MyApp app;
     app.run();
     return 0;
