@@ -10,8 +10,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <OpenGL/OpenGL.h>
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
+#include <OpenCL/opencl.h>
+#include <OpenCL/cl_gl.h>
 
 #elif defined(__linux__)
 #define CL_TARGET_OPENCL_VERSION 120
@@ -63,10 +63,7 @@ public:
             CL_CONTEXT_PLATFORM, (cl_context_properties)cl.platform,
             0};
 #elif defined(__APPLE__) || defined(__MACOSX)
-        cl_context_properties props[] = {
-            CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-            (cl_context_properties)CGLGetShareGroup(CGLGetCurrentContext()),
-            0};
+        cl_context_properties props[] = {CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE, (cl_context_properties)CGLGetShareGroup(CGLGetCurrentContext()), 0};
 
 #elif defined(__linux__)
         cl_context_properties props[] = {
